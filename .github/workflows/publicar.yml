@@ -19,9 +19,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SG_HOST: ssh.oncetrece.org   # mismo servidor de SiteGround; si el sitio está en otro servidor, cambiar aquí
+  SG_HOST: ssh.lindsaydeefholts.com
   SG_PORT: "18765"
-  SG_USER: u3108-oincfblg4gxe
+  SG_USER: u235-bz5tvygj6lhb
   SG_PATH: www/lindsaydeefholts.com/public_html
 
 jobs:

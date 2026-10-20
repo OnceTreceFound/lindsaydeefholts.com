@@ -13,6 +13,5 @@ Settings → Secrets and variables → Actions → New repository secret:
 - `SG_SSH_KEY`: la llave privada "githubpublicar" (la misma que usa oncetrece.org).
 - `SG_SSH_PASS` (opcional): solo si la llave tiene contraseña.
 
-En SiteGround (Site Tools de lindsaydeefholts.com → Devs → SSH Keys Manager) debe estar importada la llave pública "githubpublicar". Si el usuario SSH de ese sitio es distinto de `u3108-oincfblg4gxe`, cambiar `SG_USER` en los dos archivos de `.github/workflows/`.
+En SiteGround (Site Tools de lindsaydeefholts.com → Devs → SSH Keys Manager) debe estar importada la llave pública "githubpublicar". Usuario SSH del sitio: `u235-bz5tvygj6lhb`, host `ssh.lindsaydeefholts.com`, puerto 18765 (ya configurados en los workflows).
 
-`SG_HOST` apunta al mismo servidor que oncetrece.org. Si en Site Tools de lindsaydeefholts.com el "hostname" de SSH es otro, cambiarlo en los dos archivos de `.github/workflows/`.
