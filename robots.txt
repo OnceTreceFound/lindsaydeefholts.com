@@ -1,2 +1,7 @@
 User-agent: *
+Allow: /
+
+# vista.html sigue en el servidor (el despliegue nunca borra archivos).
+# Se mantiene fuera del indice para que no compita con la portada.
 Disallow: /vista.html
+Disallow: /vista-previa/
