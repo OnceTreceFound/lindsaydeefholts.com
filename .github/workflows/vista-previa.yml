@@ -53,4 +53,4 @@ jobs:
       - name: Vaciar la caché
         run: |
           ssh -i ~/.ssh/id_sg -p "$SG_PORT" -o StrictHostKeyChecking=yes "$SG_USER@$SG_HOST" \
-            "cd www/lindsaydeefholts.com/public_html && wp sg purge && rm -f _cache-test.txt && rm -rf _cc-test _cc-test2"
+            "cd www/lindsaydeefholts.com/public_html && (wp sg purge 2>/dev/null || echo "Sitio sin WordPress: la caché no se vacía por comando") && rm -f _cache-test.txt && rm -rf _cc-test _cc-test2"

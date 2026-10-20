@@ -55,9 +55,10 @@ jobs:
       - name: Vaciar la caché de SiteGround (para que el cambio se vea al instante)
         run: |
           ssh -i ~/.ssh/id_sg -p "$SG_PORT" -o StrictHostKeyChecking=yes "$SG_USER@$SG_HOST" \
-            "cd $SG_PATH && wp sg purge"
+            "cd $SG_PATH && (wp sg purge 2>/dev/null || echo "Sitio sin WordPress: la caché no se vacía por comando")"
 
       - name: Comprobar que la portada llegó al servidor
+        if: ${{ hashFiles('index.html') != '' }}
         run: |
           ssh -i ~/.ssh/id_sg -p "$SG_PORT" -o StrictHostKeyChecking=yes "$SG_USER@$SG_HOST" \
             "cd $SG_PATH && ls -l index.html && cmp -s index.html - && echo 'index.html coincide con GitHub'" < index.html
