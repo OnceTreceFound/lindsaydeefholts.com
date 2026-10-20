@@ -16,6 +16,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_sg; chmod 600 ~/.ssh/id_sg
+          echo "::notice::tipo: $(grep -c 'BEGIN OPENSSH' ~/.ssh/id_sg) openssh, $(grep -c 'BEGIN RSA' ~/.ssh/id_sg) rsa, $(grep -c 'ENCRYPTED' ~/.ssh/id_sg) encrypted-pem, END: $(grep -c 'END ' ~/.ssh/id_sg); largo lineas: $(awk '{print length}' ~/.ssh/id_sg | tr '\n' ',')"
           echo "::notice::llave: $(wc -l < ~/.ssh/id_sg) lineas; primera: $(head -1 ~/.ssh/id_sg | cut -c1-40); contraseña definida: $([ -n "$SSH_PASS" ] && echo si || echo no)"
           if [ -n "$SSH_PASS" ]; then ssh-keygen -p -P "$SSH_PASS" -N "" -f ~/.ssh/id_sg >/dev/null 2>&1 && echo "::notice::contraseña de la llave: correcta" || echo "::warning::contraseña de la llave: INCORRECTA o llave mal pegada"; fi
           ssh-keygen -y -f ~/.ssh/id_sg >/dev/null 2>&1 && echo "::notice::formato de la llave: valido" || echo "::warning::formato de la llave: NO valido (quedó cifrada o mal pegada)"
