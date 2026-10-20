@@ -21,5 +21,5 @@ jobs:
           if [ -n "$SSH_PASS" ]; then ssh-keygen -p -P "$SSH_PASS" -N "" -f ~/.ssh/id_sg >/dev/null 2>&1 && echo "::notice::contraseña de la llave: correcta" || echo "::warning::contraseña de la llave: INCORRECTA o llave mal pegada"; fi
           ssh-keygen -y -f ~/.ssh/id_sg >/dev/null 2>&1 && echo "::notice::formato de la llave: valido" || echo "::warning::formato de la llave: NO valido (quedó cifrada o mal pegada)"
           ssh-keyscan -p "$SG_PORT" "$SG_HOST" > ~/.ssh/known_hosts 2>/dev/null; echo "::notice::host responde: $([ -s ~/.ssh/known_hosts ] && echo si || echo NO)"
-          out=$(ssh -v -i ~/.ssh/id_sg -p "$SG_PORT" -o BatchMode=yes -o StrictHostKeyChecking=no "$SG_USER@$SG_HOST" "echo CONECTADO && pwd" 2>&1 | grep -iE "CONECTADO|Permission denied|Authentications that can|Offering|Server accepts|refused|timed out|Could not resolve|incorrect|^/" | head -8 | tr '\n' ' | ')
+          out=$(ssh -v -i ~/.ssh/id_sg -p "$SG_PORT" -o BatchMode=yes -o StrictHostKeyChecking=no "$SG_USER@$SG_HOST" "echo CONECTADO && pwd" 2>&1 | grep -vE "debug1: (Reading|Connecting|Connection established|identity file|Local version|Remote protocol|compat|Authenticating|SSH2_MSG|kex:|expecting|Host .* is known|rekey|Will attempt)" | tail -14 | tr '\n' ' | ')
           echo "::notice::ssh: $out"
