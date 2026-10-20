@@ -28,9 +28,11 @@ jobs:
       - name: Preparar la llave de acceso a SiteGround
         env:
           SSH_KEY: ${{ secrets.SG_SSH_KEY }}
+          SSH_PASS: ${{ secrets.SG_SSH_PASS }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_sg && chmod 600 ~/.ssh/id_sg
+          if [ -n "$SSH_PASS" ]; then ssh-keygen -p -P "$SSH_PASS" -N "" -f ~/.ssh/id_sg >/dev/null; fi
           ssh-keyscan -p "$SG_PORT" -H "$SG_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Marcar la vista previa como no indexable
