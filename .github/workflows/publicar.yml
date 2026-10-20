@@ -1,0 +1,63 @@
+# Publicación automática a SiteGround.
+# Cada vez que se guarda un cambio en la rama "main", estos archivos
+# se copian a public_html de lindsaydeefholts.com. Solo se copia lo que cambió.
+# Nunca borra nada en el servidor.
+#
+# Secretos necesarios en GitHub (Settings → Secrets and variables → Actions):
+#   SG_SSH_KEY   la llave privada (su parte pública está importada en SiteGround,
+#                Site Tools → Devs → SSH Keys, con el nombre "githubpublicar")
+#   SG_SSH_PASS  (opcional) contraseña de la llave, solo si la tiene
+name: Publicar en lindsaydeefholts.com
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+env:
+  SG_HOST: ssh.oncetrece.org   # mismo servidor de SiteGround; si el sitio está en otro servidor, cambiar aquí
+  SG_PORT: "18765"
+  SG_USER: u3108-oincfblg4gxe
+  SG_PATH: www/lindsaydeefholts.com/public_html
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar los archivos del sitio
+        uses: actions/checkout@v4
+
+      - name: Preparar la llave de acceso a SiteGround
+        env:
+          SSH_KEY: ${{ secrets.SG_SSH_KEY }}
+          SSH_PASS: ${{ secrets.SG_SSH_PASS }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_sg
+          chmod 600 ~/.ssh/id_sg
+          # Si la llave tiene contraseña, quitarla de la copia temporal para que ssh no la pida
+          if [ -n "$SSH_PASS" ]; then ssh-keygen -p -P "$SSH_PASS" -N "" -f ~/.ssh/id_sg; fi
+          ssh-keyscan -p "$SG_PORT" -H "$SG_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Copiar al servidor (solo lo que cambió)
+        run: |
+          rsync -rvz --times --omit-dir-times --no-perms --no-owner --no-group \
+            --exclude='.git/' --exclude='.github/' --exclude='.gitignore' \
+            --exclude='README.md' \
+            --exclude='.DS_Store' \
+            -e "ssh -i ~/.ssh/id_sg -p $SG_PORT -o StrictHostKeyChecking=yes" \
+            ./ "$SG_USER@$SG_HOST:$SG_PATH/"
+
+      - name: Vaciar la caché de SiteGround (para que el cambio se vea al instante)
+        run: |
+          ssh -i ~/.ssh/id_sg -p "$SG_PORT" -o StrictHostKeyChecking=yes "$SG_USER@$SG_HOST" \
+            "cd $SG_PATH && wp sg purge"
+
+      - name: Comprobar que la portada llegó al servidor
+        run: |
+          ssh -i ~/.ssh/id_sg -p "$SG_PORT" -o StrictHostKeyChecking=yes "$SG_USER@$SG_HOST" \
+            "cd $SG_PATH && ls -l index.html && cmp -s index.html - && echo 'index.html coincide con GitHub'" < index.html

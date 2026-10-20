@@ -1,0 +1,54 @@
+# Vista previa: lo que se guarda en la rama "vista-previa" se publica en
+# https://lindsaydeefholts.com/vista-previa/  (no sale en el menú ni en Google).
+# Sirve para revisar un cambio desde el celular antes de publicarlo de verdad.
+name: Vista previa en lindsaydeefholts.com/vista-previa
+
+on:
+  push:
+    branches: [vista-previa]
+  workflow_dispatch:
+
+concurrency:
+  group: vista-previa
+  cancel-in-progress: true
+
+env:
+  SG_HOST: ssh.oncetrece.org   # mismo servidor de SiteGround; si el sitio está en otro servidor, cambiar aquí
+  SG_PORT: "18765"
+  SG_USER: u3108-oincfblg4gxe
+  SG_PATH: www/lindsaydeefholts.com/public_html/vista-previa
+
+jobs:
+  previa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar los archivos
+        uses: actions/checkout@v4
+
+      - name: Preparar la llave de acceso a SiteGround
+        env:
+          SSH_KEY: ${{ secrets.SG_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_sg && chmod 600 ~/.ssh/id_sg
+          ssh-keyscan -p "$SG_PORT" -H "$SG_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Marcar la vista previa como no indexable
+        run: |
+          printf 'Header set X-Robots-Tag "noindex, nofollow"\nHeader set Cache-Control "no-cache"\n' > .htaccess
+          # Etiqueta "no indexar" en cada página, por si el servidor ignora la cabecera
+          find . -name '*.html' -not -path './.git/*' -exec sed -i 's#<head>#<head><meta name="robots" content="noindex,nofollow">#I' {} +
+
+      - name: Copiar a la carpeta de vista previa
+        run: |
+          ssh -i ~/.ssh/id_sg -p "$SG_PORT" -o StrictHostKeyChecking=yes "$SG_USER@$SG_HOST" "mkdir -p $SG_PATH"
+          rsync -rvz --times --omit-dir-times --no-perms --no-owner --no-group --delete \
+            --exclude='.git/' --exclude='.github/' --exclude='.gitignore' \
+            --exclude='LEEME.txt' --exclude='PUBLICAR.md' --exclude='README.md' --exclude='.DS_Store' \
+            -e "ssh -i ~/.ssh/id_sg -p $SG_PORT -o StrictHostKeyChecking=yes" \
+            ./ "$SG_USER@$SG_HOST:$SG_PATH/"
+
+      - name: Vaciar la caché
+        run: |
+          ssh -i ~/.ssh/id_sg -p "$SG_PORT" -o StrictHostKeyChecking=yes "$SG_USER@$SG_HOST" \
+            "cd www/lindsaydeefholts.com/public_html && wp sg purge && rm -f _cache-test.txt && rm -rf _cc-test _cc-test2"
